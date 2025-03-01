@@ -11,9 +11,7 @@ class Program
     public static void Main(string[] args)
     {
         var services = ConfigureServiceProvider();
-
         var addBuilder = BuildAvaloniaApp(services);
-
         addBuilder.StartWithClassicDesktopLifetime(args);
     }
 
@@ -31,10 +29,8 @@ class Program
     private static IServiceProvider ConfigureServiceProvider()
     {
         var services = new ServiceCollection();
-
         services.AddLogging(config => { config.AddConsole(); });
-
-
+        
         return services.BuildServiceProvider();
     }
 }
