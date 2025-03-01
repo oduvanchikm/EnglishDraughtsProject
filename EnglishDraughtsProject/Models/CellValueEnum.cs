@@ -6,6 +6,8 @@ public class CellValueEnum
     {
         Empty,
         WhiteChecker,
-        BlackChecker
+        BlackChecker,
+        WhiteKing,
+        BlackKing
     };
 }

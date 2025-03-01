@@ -106,6 +106,8 @@ public partial class BoardView : UserControl
         {
             CellValueEnum.CellValue.WhiteChecker => "⚪",
             CellValueEnum.CellValue.BlackChecker => "⚫",
+            CellValueEnum.CellValue.WhiteKing => "◉",
+            CellValueEnum.CellValue.BlackKing => "◎",
             _ => ""
         };
     }
@@ -118,20 +120,25 @@ public partial class BoardView : UserControl
 
         if (_selectedCell == null)
         {
-            if (clickedCell.Value != CellValueEnum.CellValue.Empty)
+            if (clickedCell.Value == CellValueEnum.CellValue.Empty)
             {
-                _selectedCell = clickedCell;
+                return;
             }
+            if ((_gameLogicService._isWhiteTurn && clickedCell.Value == CellValueEnum.CellValue.BlackChecker) ||
+                (!_gameLogicService._isWhiteTurn && clickedCell.Value == CellValueEnum.CellValue.WhiteChecker))
+            {
+                return;
+            }
+            _selectedCell = clickedCell;
         }
         else
         {
-            try
+            if (_gameLogicService.Move(_selectedCell.X, _selectedCell.Y, x, y))
             {
-                _gameLogicService.Move(_selectedCell.X, _selectedCell.Y, x, y);
                 _selectedCell = null;
                 DrawBoard();
             }
-            catch (InvalidOperationException)
+            else
             {
                 _selectedCell = null;
             }
