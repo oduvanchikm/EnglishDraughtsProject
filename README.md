@@ -52,8 +52,8 @@ The Services folder contains classes responsible for handling the application's 
 
 The AiService class communicates with an AI service to provide move recommendations based on the current board state.
 
-1) Serializes the board state into a structured format. 
-2) Sends a request to an AI model for the best possible move. 
+1) Serializes the board state into a structured format.
+2) Sends a request to an AI model for the best possible move.
 3) Receives and processes the AI response, returning a suggested move.
 
 - GameLogicService (Game Mechanics Controller)
