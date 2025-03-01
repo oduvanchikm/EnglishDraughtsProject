@@ -15,12 +15,12 @@ public class AiService
     private readonly string _apiKey;
     private readonly ILogger<AiService> _logger;
 
-    public AiService(string apiKey, ILogger<AiService> logger)
+    public AiService(string apiKey, ILogger<AiService> logger, HttpClient? httpClient = null)
     {
-        _httpClient = new HttpClient();
+        _httpClient = httpClient ?? new HttpClient();
         _apiKey = apiKey;
         _logger = logger;
-        
+
         _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_apiKey}");
     }
 

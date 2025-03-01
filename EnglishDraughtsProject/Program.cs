@@ -17,7 +17,7 @@ class Program
         addBuilder.StartWithClassicDesktopLifetime(args);
     }
 
-    public static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider) =>
+    private static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider) =>
         AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .WithInterFont()
