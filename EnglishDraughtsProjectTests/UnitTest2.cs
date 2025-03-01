@@ -20,9 +20,9 @@ public class UnitTest2
         var board = new Board();
         board.Cells[2, 3] = new Cell(2, 3, CellValueEnum.CellValue.WhiteChecker);
         
-        // var gameLogic = new GameLogicService(board, null);
+        var gameLogic = new GameLogicService(board, null);
         
-        var result = _gameLogicService.Move(2, 3, 3, 4);
+        var result = gameLogic.Move(2, 3, 3, 4);
         Assert.True(result, "The move must be valid if the cell is free");
     }
     
@@ -32,8 +32,10 @@ public class UnitTest2
         var board = new Board();
         board.Cells[2, 3] = new Cell(2, 3, CellValueEnum.CellValue.WhiteChecker);
         board.Cells[3, 4] = new Cell(3, 4, CellValueEnum.CellValue.BlackChecker); 
+        
+        var gameLogic = new GameLogicService(board, null);
 
-        var result = _gameLogicService.Move(2, 3, 4, 5); 
+        var result = gameLogic.Move(2, 3, 4, 5); 
 
         Assert.True(result);
         Assert.Equal(CellValueEnum.CellValue.Empty, board.Cells[3, 4].Value);
@@ -45,8 +47,10 @@ public class UnitTest2
         var board = new Board();
         board.Cells[2, 3] = new Cell(2, 3, CellValueEnum.CellValue.WhiteChecker);
         board.Cells[3, 4] = new Cell(3, 4, CellValueEnum.CellValue.BlackChecker); 
+        
+        var gameLogic = new GameLogicService(board, null);
 
-        var result = _gameLogicService.Move(2, 3, 3, 4);
+        var result = gameLogic.Move(2, 3, 3, 4);
 
         Assert.False(result);
     }
