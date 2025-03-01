@@ -6,7 +6,7 @@ namespace EnglishDraughtsProject.Services;
 
 public class GameLogicService
 {
-    private readonly Board board;
+    public readonly Board board;
 
     public GameLogicService(Board board)
     {

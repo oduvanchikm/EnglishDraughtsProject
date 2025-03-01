@@ -25,7 +25,7 @@ public class Board
                 }
                 else 
                 {
-                    if (i < 3)
+                    if (j < 3)
                     {
                         Cells[i, j] = new Cell(i, j, CellValueEnum.CellValue.BlackChecker);
                     }
