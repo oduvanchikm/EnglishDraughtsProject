@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using EnglishDraughtsProject.Models;
 
 namespace EnglishDraughtsProject.Services;
@@ -7,10 +8,17 @@ public class GameLogicService
 {
     public readonly Board board;
     public bool _isWhiteTurn = true;
+    private readonly AiService _aiService;
 
-    public GameLogicService(Board board)
+    public GameLogicService(Board board, AiService aiService)
     {
         this.board = board;
+        _aiService = aiService;
+    }
+    
+    public async Task<string> GetHintAsync()
+    {
+        return await _aiService.GetHintAsync(board, _isWhiteTurn);
     }
     
     private bool IsInsideBoard(int x, int y)

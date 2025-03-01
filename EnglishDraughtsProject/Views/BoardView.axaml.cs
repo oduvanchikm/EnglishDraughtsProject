@@ -7,6 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Input;
 using EnglishDraughtsProject.Models;
 using EnglishDraughtsProject.Services;
+using Microsoft.Extensions.Logging;
 
 namespace EnglishDraughtsProject.Views;
 
@@ -37,6 +38,15 @@ public partial class BoardView : UserControl
                 VerticalAlignment = VerticalAlignment.Center
             }
         };
+        
+        var hintButton = new Button
+        {
+            Content = "Get Hint",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Bottom,
+            Margin = new Thickness(0, 20, 0, 0)
+        };
+        hintButton.Click += HintButton_Click;
 
         Content = new Grid
         {
@@ -55,14 +65,30 @@ public partial class BoardView : UserControl
                         EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative)
                     }
                 },
-                boardContainer
+                boardContainer,
+                hintButton
             }
         };
 
-        _gameLogicService = new GameLogicService(new Board());
+        _gameLogicService = new GameLogicService(new Board(), new AiService("OPENAI_API_KEY", new LoggerFactory().CreateLogger<AiService>()));
         DrawBoard();
     }
+    
+    private async void HintButton_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var hint = await _gameLogicService.GetHintAsync();
+        var parentWindow = this.VisualRoot as Window;
 
+        if (parentWindow != null)
+        {
+            var hintDialog = new HintDialog(hint);
+            await hintDialog.ShowDialog(parentWindow);
+        }
+        else
+        {
+            Console.WriteLine("Error: Cannot find parent window.");
+        }
+    }
 
     private void DrawBoard()
     {

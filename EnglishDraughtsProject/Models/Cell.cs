@@ -12,6 +12,4 @@ public class Cell
         Y = y;
         Value = value;
     }
-    
-    
 }
