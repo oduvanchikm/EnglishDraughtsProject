@@ -36,27 +36,29 @@ public class GameLogicService : BaseGameLogicService
         {
             return false;
         }
-
-        if (isJump)
-        {
-            int middleX = (fromXYCell.X + toXYCell.X) / 2;
-            int middleY = (fromXYCell.Y + toXYCell.Y) / 2;
-
-            board.Cells[middleX, middleY].Value = CellValueEnum.CellValue.Empty;
-        }
-
-        toXYCell.Value = fromXYCell.Value;
-        fromXYCell.Value = CellValueEnum.CellValue.Empty;
-
-        if (toY == (_isWhiteTurn ? 0 : 7))
-        {
-            toXYCell.Value = _isWhiteTurn ? CellValueEnum.CellValue.WhiteKing : CellValueEnum.CellValue.BlackKing;
-        }
         
-        if (!(isJump && CheckCanJump(toX, toY)))
-        {
-            _isWhiteTurn = !_isWhiteTurn; 
-        }
+        ApplyMove(board, fromX, fromY, toX, toY, isJump);
+
+        // if (isJump)
+        // {
+        //     int middleX = (fromXYCell.X + toXYCell.X) / 2;
+        //     int middleY = (fromXYCell.Y + toXYCell.Y) / 2;
+        //
+        //     board.Cells[middleX, middleY].Value = CellValueEnum.CellValue.Empty;
+        // }
+        //
+        // toXYCell.Value = fromXYCell.Value;
+        // fromXYCell.Value = CellValueEnum.CellValue.Empty;
+        //
+        // if (toY == (_isWhiteTurn ? 0 : 7))
+        // {
+        //     toXYCell.Value = _isWhiteTurn ? CellValueEnum.CellValue.WhiteKing : CellValueEnum.CellValue.BlackKing;
+        // }
+        //
+        // if (!(isJump && CheckCanJump(toX, toY)))
+        // {
+        //     _isWhiteTurn = !_isWhiteTurn; 
+        // }
 
         return true;
     }

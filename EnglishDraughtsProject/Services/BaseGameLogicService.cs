@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using EnglishDraughtsProject.Models;
 
@@ -25,7 +24,7 @@ public abstract class BaseGameLogicService : IGameLogicService
 
     protected bool IsInsideBoard(int x, int y)
     {
-        return x >= 0 && x < 8 && y >= 0 && y < 8;
+        return x >= 0 && x < sizeBoard && y >= 0 && y < sizeBoard;
     }
 
     protected bool CanMove(Cell from, Cell to)
@@ -214,24 +213,17 @@ public abstract class BaseGameLogicService : IGameLogicService
 
         return moves;
     }
-    
-    protected void ApplyMoveForAi(Board board, Move move)
-    {
-        int fromX = move.fromX;
-        int fromY = move.fromY;
-        int toX = move.toX;
-        int toY = move.toY;
-        bool isJump = move.isJump;
-        var value = move.value;
 
-        var toXYCell = new Cell(toX, toY, value);
-        var fromXYCell = new Cell(fromX, fromY, value);
+
+    protected void ApplyMove(Board board, int fromX, int fromY, int toX, int toY, bool isJump)
+    {
+        var fromXYCell = board.Cells[fromX, fromY];
+        var toXYCell = board.Cells[toX, toY];
 
         if (isJump)
         {
             int middleX = (fromX + toX) / 2;
             int middleY = (fromY + toY) / 2;
-
             board.Cells[middleX, middleY].Value = CellValueEnum.CellValue.Empty;
         }
 
@@ -242,10 +234,15 @@ public abstract class BaseGameLogicService : IGameLogicService
         {
             toXYCell.Value = _isWhiteTurn ? CellValueEnum.CellValue.WhiteKing : CellValueEnum.CellValue.BlackKing;
         }
-        
+
         if (!(isJump && CheckCanJump(toX, toY)))
         {
-            _isWhiteTurn = !_isWhiteTurn; 
+            _isWhiteTurn = !_isWhiteTurn;
         }
+    }
+    
+    protected void ApplyMoveForAi(Board board, Move move)
+    {
+        ApplyMove(board, move.fromX, move.fromY, move.toX, move.toY, move.isJump);
     }
 }

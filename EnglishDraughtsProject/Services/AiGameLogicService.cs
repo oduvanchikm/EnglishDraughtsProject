@@ -79,7 +79,13 @@ public class AiGameLogicService : BaseGameLogicService
 
     private int MinMaxAlgorithm(Board board, bool isWhiteTurn, int depth, int minValue, int maxValue)
     {
-        return 0;
+        int score = int.MinValue;
+        
+        
+        
+        
+        
+        return score;
     }
     
 }
