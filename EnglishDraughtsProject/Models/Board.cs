@@ -1,3 +1,4 @@
+using System.Collections;
 using Microsoft.Extensions.Logging;
 
 namespace EnglishDraughtsProject.Models;
@@ -5,7 +6,7 @@ namespace EnglishDraughtsProject.Models;
 public class Board
 {
     private const int BoardSize = 8;
-    
+
     public Cell[,] Cells { get; } = new Cell[BoardSize, BoardSize];
 
     public Board()
@@ -19,25 +20,10 @@ public class Board
         {
             for (int j = 0; j < BoardSize; ++j)
             {
-                if ((i + j) % 2 == 0)
-                {
-                    Cells[i, j] = new Cell(i, j, CellValueEnum.CellValue.Empty);
-                }
-                else 
-                {
-                    if (j < 3)
-                    {
-                        Cells[i, j] = new Cell(i, j, CellValueEnum.CellValue.BlackChecker);
-                    }
-                    else if (j > 4)
-                    {
-                        Cells[i, j] = new Cell(i, j, CellValueEnum.CellValue.WhiteChecker);
-                    }
-                    else
-                    {
-                        Cells[i, j] = new Cell(i, j, CellValueEnum.CellValue.Empty);
-                    }
-                }
+                Cells[i, j] = (i + j) % 2 == 0 ? new Cell(i, j, CellValueEnum.CellValue.Empty) :
+                    (j < 3) ? new Cell(i, j, CellValueEnum.CellValue.BlackChecker) :
+                    (j > 4) ? new Cell(i, j, CellValueEnum.CellValue.WhiteChecker) :
+                    new Cell(i, j, CellValueEnum.CellValue.Empty);
             }
         }
     }

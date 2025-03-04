@@ -127,7 +127,7 @@ public partial class BoardView : UserControl
 
     private string GetCheckerSymbol(int x, int y)
     {
-        var cell = _gameLogicService.board.Cells[x, y];
+        var cell = _gameLogicService.Board.Cells[x, y];
         return cell.Value switch
         {
             CellValueEnum.CellValue.WhiteChecker => "⚪",
@@ -142,7 +142,7 @@ public partial class BoardView : UserControl
     {
         if (sender is not Border border || border.Tag is not (int x, int y)) return;
 
-        var clickedCell = _gameLogicService.board.Cells[x, y];
+        var clickedCell = _gameLogicService.Board.Cells[x, y];
 
         if (_selectedCell == null)
         {
@@ -150,8 +150,8 @@ public partial class BoardView : UserControl
             {
                 return;
             }
-            if ((_gameLogicService._isWhiteTurn && clickedCell.Value == CellValueEnum.CellValue.BlackChecker) ||
-                (!_gameLogicService._isWhiteTurn && clickedCell.Value == CellValueEnum.CellValue.WhiteChecker))
+            if ((_gameLogicService.IsWhiteTurn && clickedCell.Value == CellValueEnum.CellValue.BlackChecker) ||
+                (!_gameLogicService.IsWhiteTurn && clickedCell.Value == CellValueEnum.CellValue.WhiteChecker))
             {
                 return;
             }
