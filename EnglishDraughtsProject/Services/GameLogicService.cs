@@ -32,6 +32,11 @@ public class GameLogicService : BaseGameLogicService
         int directionY = fromXYCell.Y - toXYCell.Y;
         bool isJump = Math.Abs(directionX) == 2 && Math.Abs(directionY) == 2;
 
+        if (PlayerHasAvailableJump(_isWhiteTurn) && !isJump)
+        {
+            return false;
+        }
+
         if (isJump)
         {
             int middleX = (fromXYCell.X + toXYCell.X) / 2;

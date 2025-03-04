@@ -14,6 +14,21 @@ public class Board
         InitCells();
     }
 
+    public Board CloneBoard()
+    {
+        Board cloneBoard = new Board();
+
+        for (int i = 0; i < BoardSize; ++i)
+        {
+            for (int j = 0; j < BoardSize; ++j)
+            {
+                cloneBoard.Cells[i, j] = new Cell(Cells[i, j]);
+            }
+        }
+        
+        return cloneBoard;
+    }
+
     private void InitCells()
     {
         for (int i = 0; i < BoardSize; ++i)

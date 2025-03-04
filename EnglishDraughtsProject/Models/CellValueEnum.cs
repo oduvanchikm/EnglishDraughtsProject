@@ -9,5 +9,5 @@ public class CellValueEnum
         BlackChecker,
         WhiteKing,
         BlackKing
-    };
+    }
 }
