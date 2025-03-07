@@ -1,3 +1,7 @@
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+using Avalonia.Markup.Xaml;
+
 namespace EnglishDraughtsProject.Models;
 
 public class OpenAiResponse

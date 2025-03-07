@@ -43,7 +43,7 @@ namespace EnglishDraughtsProject
                 .LogToTrace()
                 .AfterSetup(_ =>
                 {
-                    var logger = serviceProvider.GetRequiredService<ILogger<Program>>();  // Логгер для Program
+                    var logger = serviceProvider.GetRequiredService<ILogger<Program>>(); 
                     logger.LogInformation("[Program] : Application started.");
                 });
 
@@ -51,15 +51,13 @@ namespace EnglishDraughtsProject
         {
             var services = new ServiceCollection();
             
-            // Настройка логирования через Serilog
             services.AddLogging(config =>
             {
-                config.AddSerilog();  // Используем Serilog для логирования
-                config.SetMinimumLevel(LogLevel.Debug);  // Уровень логирования
+                config.AddSerilog();
+                config.SetMinimumLevel(LogLevel.Debug); 
             });
 
-            // Регистрируем все сервисы
-            services.AddSingleton<Board>();  // Регистрируем доску
+            services.AddSingleton<Board>(); 
             services.AddSingleton<AiService>(provider =>
             {
                 var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
@@ -68,7 +66,7 @@ namespace EnglishDraughtsProject
                     throw new InvalidOperationException("API key is missing. Set the OPENAI_API_KEY environment variable.");
                 }
                 var logger = provider.GetRequiredService<ILogger<AiService>>();
-                return new AiService(apiKey, logger);  // Регистрация AiService
+                return new AiService(apiKey, logger); 
             });
 
             services.AddSingleton<GameLogicService>(provider =>
@@ -81,13 +79,14 @@ namespace EnglishDraughtsProject
             services.AddSingleton<AiGameLogicService>(provider =>
             {
                 var board = provider.GetRequiredService<Board>();
+                // var aiService = provider.GetRequiredService<GameLogicService>();
                 return new AiGameLogicService(board, provider.GetRequiredService<ILogger<AiGameLogicService>>());
             });
 
-            services.AddSingleton<BoardView>();  // Регистрируем BoardView
-            services.AddSingleton<MainWindow>();  // Регистрируем MainWindow
+            services.AddSingleton<BoardView>();
+            services.AddSingleton<MainWindow>();
 
-            return services.BuildServiceProvider();  // Строим контейнер DI
+            return services.BuildServiceProvider(); 
         }
     }
 }

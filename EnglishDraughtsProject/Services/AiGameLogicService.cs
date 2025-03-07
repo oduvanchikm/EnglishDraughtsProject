@@ -12,10 +12,12 @@ public class AiGameLogicService : BaseGameLogicService
     private const int Depth = 5;
     private const int sizeBoard = 8;
     private readonly ILogger<AiGameLogicService> _logger;
-
+    // private readonly GameLogicService _gameLogicService;
+    
     public AiGameLogicService(Board board, ILogger<AiGameLogicService> logger) : base(board, logger)
     {
         _logger = logger;
+        // _gameLogicService = gameLogicService;
     }
 
     private async Task<Move> GetNextMoveAsync(Board board, bool isWhiteTurn)

@@ -1,4 +1,8 @@
 using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using Avalonia.Media;
 using Microsoft.Extensions.Logging;
 
 namespace EnglishDraughtsProject.Models;
@@ -10,6 +14,11 @@ public class Board
     public Cell[,] Cells { get; } = new Cell[BoardSize, BoardSize];
 
     public Board()
+    {
+        InitCells();
+    }
+    
+    public void ResetBoard()
     {
         InitCells();
     }

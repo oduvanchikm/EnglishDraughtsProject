@@ -9,6 +9,9 @@ public class GameLogicService : BaseGameLogicService
 {
     private readonly AiService _aiService;
     private readonly ILogger<GameLogicService> _logger;
+    
+    public void setIsWhiteTurn(bool isWhiteTurn) => _isWhiteTurn = isWhiteTurn;
+    public bool IsWhiteTurn => _isWhiteTurn;
 
     public GameLogicService(Board board, AiService aiService, ILogger<GameLogicService> logger) : base(board, logger)
     {
@@ -59,6 +62,8 @@ public class GameLogicService : BaseGameLogicService
             fromX, fromY, toX, toY, isJump ? "Yes" : "No");
 
         ApplyMove(board, fromX, fromY, toX, toY, isJump);
+        
+        _isWhiteTurn = !_isWhiteTurn;
 
         _logger.LogInformation("[GameLogicService] : Move applied successfully. Player turn is now ({0})", _isWhiteTurn ? "White" : "Black");
         Console.WriteLine("[GameLogicService] : Move applied successfully. Player turn is now ({0})", _isWhiteTurn ? "White" : "Black");

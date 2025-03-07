@@ -21,8 +21,7 @@ public partial class BoardView : UserControl
     private readonly Board _board;
     private Cell? _selectedCell = null;
     private CellValueEnum.CellValue PlayerColor;
-    private bool _isPlayerTurn;
-    // private readonly ILogger<BoardView> _logger;
+    // private bool _isPlayerTurn;
 
     public BoardView()
     {
@@ -78,7 +77,7 @@ public partial class BoardView : UserControl
         };
 
         PlayerColor = CellValueEnum.CellValue.WhiteChecker;
-        _isPlayerTurn = true;
+        _gameLogicService.setIsWhiteTurn(true);
         
         _aiGameLogicService = new AiGameLogicService(_board,
             new LoggerFactory().CreateLogger<AiGameLogicService>());
@@ -118,9 +117,20 @@ public partial class BoardView : UserControl
 
         DrawBoard();
 
-        _isPlayerTurn = PlayerColor == CellValueEnum.CellValue.WhiteChecker; 
+        _gameLogicService.setIsWhiteTurn(PlayerColor == CellValueEnum.CellValue.WhiteChecker);
+        
+        Console.WriteLine($"[BoardView RestartGame ] : Current turn: {(_gameLogicService.IsWhiteTurn ? "White" : "Black")}");
+        
+        if (!_gameLogicService.IsWhiteTurn)
+        {
+            Task.Run(async () =>
+            {
+                await Task.Delay(500);
+                await Dispatcher.UIThread.InvokeAsync(async () => await ExecuteAiMove());
+            });
+        }
 
-        if (!_isPlayerTurn) 
+        if (!_gameLogicService.IsWhiteTurn) 
         {
             // _logger.LogInformation("[BoardView] : AI's turn to move.");
             Console.WriteLine("[BoardView] : AI's turn to move.");
@@ -131,7 +141,7 @@ public partial class BoardView : UserControl
     private async void HintButton_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         
-        if (!_isPlayerTurn)
+        if (!_gameLogicService.IsWhiteTurn)
         {
             // _logger.LogInformation("[BoardView] : !AI's turn to move.");
             Console.WriteLine("[BoardView] : !AI's turn to move.");
@@ -155,51 +165,6 @@ public partial class BoardView : UserControl
             Console.WriteLine("[BoardView] : Error: Cannot find parent window.");
         }
     }
-
-    // private void DrawBoard()
-    // {
-    //     try
-    //     {
-    //         _grid.Children.Clear();
-    //
-    //         // _logger.LogInformation("[BoardView] : Drawing board.");
-    //         Console.WriteLine("[BoardView] : Drawing board.");
-    //
-    //         for (int y = 0; y < 8; ++y)
-    //         {
-    //             for (int x = 0; x < 8; ++x)
-    //             {
-    //                 var cellColor = (x + y) % 2 == 0 ? Brushes.BurlyWood : Brushes.SaddleBrown;
-    //                 var border = new Border
-    //                 {
-    //                     Background = cellColor,
-    //                     Width = 80,
-    //                     Height = 80,
-    //                     CornerRadius = new CornerRadius(6),
-    //                     BorderBrush = Brushes.Black,
-    //                     BorderThickness = new Thickness(1),
-    //                     Child = new TextBlock
-    //                     {
-    //                         Text = GetCheckerSymbol(x, y),
-    //                         FontSize = 36,
-    //                         HorizontalAlignment = HorizontalAlignment.Center,
-    //                         VerticalAlignment = VerticalAlignment.Center,
-    //                         Foreground = (x + y) % 2 == 0 ? Brushes.Black : Brushes.White
-    //                     },
-    //                     Tag = (x, y)
-    //                 };
-    //
-    //                 border.PointerPressed += OnCellClick;
-    //                 _grid.Children.Add(border);
-    //             }
-    //         }
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         Console.WriteLine("[BoardView] EXCEPTION!!! : " + ex.Message);
-    //     }
-    //     
-    // }
     
     private void DrawBoard()
     {
@@ -248,17 +213,15 @@ public partial class BoardView : UserControl
         {
             CellValueEnum.CellValue.WhiteChecker => "⚪",
             CellValueEnum.CellValue.BlackChecker => "⚫",
-            CellValueEnum.CellValue.WhiteKing => "◉",
-            CellValueEnum.CellValue.BlackKing => "◎",
+            CellValueEnum.CellValue.WhiteKing => "\ud83d\udd34",
+            CellValueEnum.CellValue.BlackKing => "\ud83d\udd35",
             _ => ""
         };
     }
 
     private async void OnCellClick(object? sender, PointerPressedEventArgs e)
     {
-        if (!_isPlayerTurn) return;
-        
-        Console.WriteLine($"[BoardView] : _isPlayerTurn = {_isPlayerTurn}");
+        if (!_gameLogicService.IsWhiteTurn) return;
 
         if (sender is not Border border || border.Tag is not (int x, int y)) return;
 
@@ -269,31 +232,25 @@ public partial class BoardView : UserControl
             if (clickedCell.Value == CellValueEnum.CellValue.Empty) return;
             if ((_gameLogicService.IsWhiteTurn && clickedCell.Value == CellValueEnum.CellValue.BlackChecker) ||
                 (!_gameLogicService.IsWhiteTurn && clickedCell.Value == CellValueEnum.CellValue.WhiteChecker)) return;
+
             _selectedCell = clickedCell;
-            // _logger.LogInformation("[BoardView] : Cell ({}, {}) selected.", x, y);
-            Console.WriteLine("[BoardView] : Cell ({0}, {1}) selected.", x, y);
         }
         else
         {
             if (_gameLogicService.Move(_selectedCell.X, _selectedCell.Y, x, y))
             {
-                // _logger.LogInformation("[BoardView] : Move from ({}, {}) to ({}, {}) successful.", _selectedCell.X, _selectedCell.Y, x, y);
-                Console.WriteLine("[BoardView] : Move from ({0}, {1}) to ({2}, {3}) successful.", _selectedCell.X, _selectedCell.Y, x, y);
-
                 HighlightMove(_selectedCell.X, _selectedCell.Y, x, y);
                 _selectedCell = null;
                 DrawBoard();
-                
-                _isPlayerTurn = false;
 
-                // await Task.Delay(500);
+                _gameLogicService.setIsWhiteTurn(false); 
+                Console.WriteLine("[OnCellClick      ] : Player moved. Now AI's turn.");
+                
+                await Task.Delay(500);
                 await ExecuteAiMove();
             }
             else
             {
-                // _logger.LogWarning("[BoardView] : Invalid move from ({}, {}) to ({}, {}).", _selectedCell.X, _selectedCell.Y, x, y);
-                Console.WriteLine("[BoardView] : Invalid move from ({0}, {1}) to ({2}, {3}).", _selectedCell.X, _selectedCell.Y, x, y);
-
                 _selectedCell = null;
             }
         }
@@ -301,54 +258,31 @@ public partial class BoardView : UserControl
 
     private async Task ExecuteAiMove()
     {
-        try
+        if (_gameLogicService.IsWhiteTurn) return;
+
+        var aiMove = await _aiGameLogicService.GetHintAsync();
+
+        if (!string.IsNullOrEmpty(aiMove))
         {
-            if (_isPlayerTurn) return;
-        
-            Console.WriteLine($"[BoardView] : _isPlayerTurn = {_isPlayerTurn}");
-        
-            // _logger.LogInformation("[BoardView] : AI is making a move.");
-            Console.WriteLine("[BoardView] : AI is making a move.");
+            var moveParts = aiMove.Split(" to ");
 
-            var aiMove = await _aiGameLogicService.GetHintAsync();
-        
-            Console.WriteLine("[BoardView] : AI move 52525252: " + aiMove);
-        
-            if (!string.IsNullOrEmpty(aiMove))
+            if (moveParts.Length == 2)
             {
-                var moveParts = aiMove.Split(" to ");
+                var fromCoordinates = moveParts[0].Substring(5);
+                var (fromX, fromY) = ParseCoordinates(fromCoordinates);
 
-                if (moveParts.Length == 2)
+                var toPart = moveParts[1].Split("),")[0];
+                var (toX, toY) = ParseCoordinates(toPart.Trim());
+
+                if (_aiGameLogicService.Move(fromX, fromY, toX, toY))
                 {
-                    Console.WriteLine("Parsing move...");
+                    DrawBoard();
+                    
+                    Console.WriteLine($"[BoardView ExecuteAiMove] : Current turn: {(_gameLogicService.IsWhiteTurn ? "White" : "Black")}");
 
-                    var fromCoordinates = moveParts[0].Substring(5);
-                    Console.WriteLine("Parsing move from: " + fromCoordinates);
-                    var (fromX, fromY) = ParseCoordinates(fromCoordinates);
-                    Console.WriteLine("Parsing move to: " + fromX + " " + fromY);
-
-                    var toPart = moveParts[1].Split("),")[0];
-                    Console.WriteLine("Parsing move from: " + toPart);
-                    var (toX, toY) = ParseCoordinates(toPart.Trim());
-                    Console.WriteLine("Parsing move to: " + toX + " " + toY);
-
-                    Console.WriteLine($"AI move: from ({fromX}, {fromY}) to ({toX}, {toY})");
-
-                    if (_gameLogicService.Move(fromX, fromY, toX, toY))
-                    {
-                        Console.WriteLine("[BoardView] : AI moved from ({0}, {1}) to ({2}, {3}) ", fromX, fromY, toX, toY);
-                        DrawBoard();
-                    }
+                    _gameLogicService.setIsWhiteTurn(true);
                 }
             }
-
-        
-            _isPlayerTurn = true;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
         }
     }
 
