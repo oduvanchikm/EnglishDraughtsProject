@@ -1,62 +1,93 @@
-﻿using Avalonia;
-using System;
+﻿using System;
+using Avalonia;
 using EnglishDraughtsProject.Models;
 using EnglishDraughtsProject.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using EnglishDraughtsProject.Views;
+using Serilog;
 
-namespace EnglishDraughtsProject;
-
-class Program
+namespace EnglishDraughtsProject
 {
-    [STAThread]
-    public static void Main(string[] args)
+    class Program
     {
-        var services = ConfigureServiceProvider();
-        var addBuilder = BuildAvaloniaApp(services);
-        addBuilder.StartWithClassicDesktopLifetime(args);
-    }
-
-    private static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider) =>
-        AppBuilder.Configure<App>()
-            .UsePlatformDetect()
-            .WithInterFont()
-            .LogToTrace()
-            .AfterSetup(_ =>
+        [STAThread]
+        public static void Main(string[] args)
+        {
+            
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.File("logs.txt", rollingInterval: RollingInterval.Day)
+                .CreateLogger();
+            
+            
+            try
             {
-                var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
-                logger.LogInformation("Application started.");
+                var services = ConfigureServiceProvider();
+                var builder = BuildAvaloniaApp(services);
+                builder.StartWithClassicDesktopLifetime(args); 
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Application failed to start.");
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
+        }
+
+        private static AppBuilder BuildAvaloniaApp(IServiceProvider serviceProvider) =>
+            AppBuilder.Configure<App>()
+                .UsePlatformDetect()
+                .WithInterFont()
+                .LogToTrace()
+                .AfterSetup(_ =>
+                {
+                    var logger = serviceProvider.GetRequiredService<ILogger<Program>>();  // Логгер для Program
+                    logger.LogInformation("[Program] : Application started.");
+                });
+
+        private static IServiceProvider ConfigureServiceProvider()
+        {
+            var services = new ServiceCollection();
+            
+            // Настройка логирования через Serilog
+            services.AddLogging(config =>
+            {
+                config.AddSerilog();  // Используем Serilog для логирования
+                config.SetMinimumLevel(LogLevel.Debug);  // Уровень логирования
             });
 
-    private static IServiceProvider ConfigureServiceProvider()
-    {
-        var services = new ServiceCollection();
-        services.AddLogging(config => { config.AddConsole(); });
-        
-        services.AddSingleton<Board>();
-        
-        services.AddSingleton<AiService>(provider =>
-        {
-            var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-            if (string.IsNullOrEmpty(apiKey))
+            // Регистрируем все сервисы
+            services.AddSingleton<Board>();  // Регистрируем доску
+            services.AddSingleton<AiService>(provider =>
             {
-                Console.WriteLine($"✅ API-ключ загружен: {apiKey.Substring(0, 5)}********");
-                throw new InvalidOperationException("DeepSeek API key is missing. Set the OPENAI_API_KEY environment variable.");
-            }
-            
-            Console.WriteLine($"✅ API-ключ загружен: {apiKey.Substring(0, 5)}********");
+                var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+                if (string.IsNullOrEmpty(apiKey))
+                {
+                    throw new InvalidOperationException("API key is missing. Set the OPENAI_API_KEY environment variable.");
+                }
+                var logger = provider.GetRequiredService<ILogger<AiService>>();
+                return new AiService(apiKey, logger);  // Регистрация AiService
+            });
 
-            var logger = provider.GetRequiredService<ILogger<AiService>>();
-            return new AiService(apiKey, logger);
-        });
+            services.AddSingleton<GameLogicService>(provider =>
+            {
+                var board = provider.GetRequiredService<Board>();
+                var aiService = provider.GetRequiredService<AiService>();
+                return new GameLogicService(board, aiService, provider.GetRequiredService<ILogger<GameLogicService>>());
+            });
 
-        services.AddSingleton<GameLogicService>(provider =>
-        {
-            var board = provider.GetRequiredService<Board>();
-            var aiService = provider.GetRequiredService<AiService>();
-            return new GameLogicService(board, aiService);
-        });
-        
-        return services.BuildServiceProvider();
+            services.AddSingleton<AiGameLogicService>(provider =>
+            {
+                var board = provider.GetRequiredService<Board>();
+                return new AiGameLogicService(board, provider.GetRequiredService<ILogger<AiGameLogicService>>());
+            });
+
+            services.AddSingleton<BoardView>();  // Регистрируем BoardView
+            services.AddSingleton<MainWindow>();  // Регистрируем MainWindow
+
+            return services.BuildServiceProvider();  // Строим контейнер DI
+        }
     }
 }

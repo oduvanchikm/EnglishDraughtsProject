@@ -20,5 +20,8 @@ public class Move
         this.value = value;
     }
     
-    public override string ToString() => value.ToString();
+    public override string ToString()
+    {
+        return $"From ({fromX}, {fromY}) to ({toX}, {toY}), IsJump: {isJump}, Value: {value}";
+    }
 }

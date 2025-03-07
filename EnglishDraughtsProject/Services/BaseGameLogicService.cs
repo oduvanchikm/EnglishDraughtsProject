@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using EnglishDraughtsProject.Models;
+using Microsoft.Extensions.Logging;
 
 namespace EnglishDraughtsProject.Services;
 
@@ -10,27 +11,37 @@ public abstract class BaseGameLogicService : IGameLogicService
     protected readonly Board board;
     protected bool _isWhiteTurn = true;
     private const int sizeBoard = 8;
+    private readonly ILogger<BaseGameLogicService> _logger;
 
     public Board Board => board;
     public bool IsWhiteTurn => _isWhiteTurn;
 
-    protected BaseGameLogicService(Board board)
+    protected BaseGameLogicService(Board board, ILogger<BaseGameLogicService> logger)
     {
         this.board = board;
+        _logger = logger;
     }
 
     public abstract Task<string> GetHintAsync();
     public abstract bool Move(int fromX, int fromY, int toX, int toY);
 
-    protected bool IsInsideBoard(int x, int y)
+    private bool IsInsideBoard(int x, int y)
     {
-        return x >= 0 && x < sizeBoard && y >= 0 && y < sizeBoard;
+        bool inside = x >= 0 && x < sizeBoard && y >= 0 && y < sizeBoard; 
+        _logger.LogDebug("[BaseGameLogicService] : Checking if ({X}, {Y}) is inside board: {Result}", x, y, inside);
+        // Console.WriteLine("[BaseGameLogicService] : Checking if ({0}, {1}) is inside board: {2}", x, y, inside);
+        return inside;
     }
 
     protected bool CanMove(Cell from, Cell to)
     {
+        _logger.LogInformation("[BaseGameLogicService] : Checking if move is valid from ({FromX}, {FromY}) to ({ToX}, {ToY})", from.X, from.Y, to.X, to.Y);
+        // Console.WriteLine("[BaseGameLogicService] : Move from ({0}, {1}) to ({2}, {3})", from.X, from.Y, to.X, to.Y);
+        
         if (from.Value == CellValueEnum.CellValue.Empty || to.Value != CellValueEnum.CellValue.Empty)
         {
+            _logger.LogWarning("[BaseGameLogicService] : Move is invalid due to empty from cell or occupied to cell.");
+            // Console.WriteLine("[BaseGameLogicService] : Move is invalid due to empty from cell or occupied to cell.");
             return false;
         }
 
@@ -45,6 +56,8 @@ public abstract class BaseGameLogicService : IGameLogicService
             if ((from.Value == CellValueEnum.CellValue.WhiteChecker && directionY <= 0) ||
                 (from.Value == CellValueEnum.CellValue.BlackChecker && directionY >= 0))
             {
+                _logger.LogWarning("[BaseGameLogicService] : Checker cannot move in that direction.");
+                // Console.WriteLine("[BaseGameLogicService] : Checker cannot move in that direction.");
                 return false;
             }
         }
@@ -62,15 +75,22 @@ public abstract class BaseGameLogicService : IGameLogicService
             if (board.Cells[middleX, middleY].Value != CellValueEnum.CellValue.Empty
                 && board.Cells[middleX, middleY].Value != from.Value)
             {
+                _logger.LogInformation("[BaseGameLogicService] : Valid jump move.");
+                // Console.WriteLine("[BaseGameLogicService] : Valid jump move.");
                 return true;
             }
         }
 
+        _logger.LogWarning("[BaseGameLogicService] : Move is invalid.");
+        // Console.WriteLine("[BaseGameLogicService] : Move is invalid.");
         return false;
     }
 
-    protected bool CheckCanJump(int x, int y)
+    private bool CheckCanJump(int x, int y)
     {
+        _logger.LogInformation("[BaseGameLogicService] : Checking if piece at ({X}, {Y}) can jump", x, y);
+        // Console.WriteLine("[BaseGameLogicService] : Checking if piece at ({0}, {1}) can jump", x, y);
+
         var cell = board.Cells[x, y];
 
         int[] directions = { -2, 2 };
@@ -95,17 +115,24 @@ public abstract class BaseGameLogicService : IGameLogicService
                     if (isKing || (cell.Value == CellValueEnum.CellValue.WhiteChecker && directionY < 0) ||
                         (cell.Value == CellValueEnum.CellValue.BlackChecker && directionY > 0))
                     {
+                        _logger.LogInformation("[BaseGameLogicService] : Piece can jump.");
+                        // Console.WriteLine("[BaseGameLogicService] : Piece can jump.");
                         return true;
                     }
                 }
             }
         }
-
+        
+        _logger.LogInformation("[BaseGameLogicService] : No jump possible.");
+        // Console.WriteLine("[BaseGameLogicService] : No jump possible.");
         return false;
     }
 
     protected bool PlayerHasAvailableJump(bool isWhiteTurn)
     {
+        _logger.LogInformation("[BaseGameLogicService] : Checking if player has available jump moves. Player: {PlayerColor}", isWhiteTurn ? "White" : "Black");
+        // Console.WriteLine("[BaseGameLogicService] : Checking if player has available jump moves. Player: {0}", isWhiteTurn ? "White" : "Black");
+        
         for (int x = 0; x < sizeBoard; x++)
         {
             for (int y = 0; y < sizeBoard; y++)
@@ -119,17 +146,23 @@ public abstract class BaseGameLogicService : IGameLogicService
                 {
                     if (CheckCanJump(x, y))
                     {
+                        _logger.LogInformation("[BaseGameLogicService] : Player has available jump.");
+                        // Console.WriteLine("[BaseGameLogicService] : Player has available jump.");
                         return true;
                     }
                 }
             }
         }
 
+        _logger.LogInformation("[BaseGameLogicService] : Player does not have any available jump.");
+        // Console.WriteLine("[BaseGameLogicService] : Player does not have any available jump.");
         return false;
     }
 
     protected List<Move> GetAllMoves(Board board, bool isWhiteTurn)
     {
+        _logger.LogInformation("[BaseGameLogicService] : Getting all possible moves for {PlayerColor} player.", isWhiteTurn ? "White" : "Black");
+        // Console.WriteLine("[BaseGameLogicService] : Getting all possible moves for {0} player.", isWhiteTurn ? "White" : "Black.");
         List<Move> moves = new List<Move>();
 
         bool isAvailableJump = PlayerHasAvailableJump(isWhiteTurn);
@@ -167,12 +200,16 @@ public abstract class BaseGameLogicService : IGameLogicService
                 }
             }
         }
-
+        
+        _logger.LogInformation("[BaseGameLogicService] : Total moves found: {MoveCount}", moves.Count);
+        // Console.WriteLine("[BaseGameLogicService] : Total moves found: {0}", moves.Count);
         return moves;
     }
 
     private List<Move> GetMovesForOneChecker(Board board, int x, int y)
     {
+        _logger.LogInformation("[BaseGameLogicService] : Getting possible moves for piece at ({X}, {Y})", x, y);
+        // Console.WriteLine("[BaseGameLogicService] : Getting possible moves for piece at ({0}, {1})", x, y);
         List<Move> moves = new List<Move>();
 
         bool isKing = board.Cells[x, y].Value == CellValueEnum.CellValue.WhiteKing ||
@@ -211,12 +248,17 @@ public abstract class BaseGameLogicService : IGameLogicService
             }
         }
 
+        _logger.LogInformation("[BaseGameLogicService] : Found {MoveCount} moves for piece at ({X}, {Y})", moves.Count, x, y);
+        // Console.WriteLine("[BaseGameLogicService] : Found {0} moves for piece at ({1}, {2})", moves.Count, x, y);
         return moves;
     }
 
 
     protected void ApplyMove(Board board, int fromX, int fromY, int toX, int toY, bool isJump)
     {
+        _logger.LogInformation("[BaseGameLogicService] : Applying move from ({FromX}, {FromY}) to ({ToX}, {ToY}). Jump: {IsJump}", fromX, fromY, toX, toY, isJump);
+        // Console.WriteLine("[BaseGameLogicService] : Applying move from ({0}, {1}) to ({2}, {3}). Jump: {4}", fromX, fromY, toX, toY, isJump);
+
         var fromXYCell = board.Cells[fromX, fromY];
         var toXYCell = board.Cells[toX, toY];
 
@@ -225,6 +267,8 @@ public abstract class BaseGameLogicService : IGameLogicService
             int middleX = (fromX + toX) / 2;
             int middleY = (fromY + toY) / 2;
             board.Cells[middleX, middleY].Value = CellValueEnum.CellValue.Empty;
+            _logger.LogInformation("[BaseGameLogicService] : Jumped over piece at ({MiddleX}, {MiddleY})", middleX, middleY);
+            // Console.WriteLine("[BaseGameLogicService] : Jumped over piece at ({0}, {1})", middleX, middleY);
         }
 
         toXYCell.Value = fromXYCell.Value;
@@ -233,16 +277,22 @@ public abstract class BaseGameLogicService : IGameLogicService
         if (toY == (_isWhiteTurn ? 0 : 7))
         {
             toXYCell.Value = _isWhiteTurn ? CellValueEnum.CellValue.WhiteKing : CellValueEnum.CellValue.BlackKing;
+            _logger.LogInformation("[BaseGameLogicService] : Piece promoted to king at ({ToX}, {ToY})", toX, toY);
+            // Console.WriteLine("[BaseGameLogicService] : Piece promoted to king at ({0}, {1})", toX, toY);
         }
 
         if (!(isJump && CheckCanJump(toX, toY)))
         {
             _isWhiteTurn = !_isWhiteTurn;
+            _logger.LogInformation("[BaseGameLogicService] : Turn switched. It is now {PlayerColor}'s turn.", _isWhiteTurn ? "White" : "Black");
+            // Console.WriteLine("[BaseGameLogicService] : Turn switched. It is now {0}'s turn.", _isWhiteTurn ? "White" : "Black");
         }
     }
     
     protected void ApplyMoveForAi(Board board, Move move)
     {
+        _logger.LogInformation("[BaseGameLogicService] : AI is applying move from ({FromX}, {FromY}) to ({ToX}, {ToY})", move.fromX, move.fromY, move.toX, move.toY);
+        // Console.WriteLine("[BaseGameLogicService] : AI is applying move from ({0}, {1}) to ({2}, {3})", move.fromX, move.fromY, move.toX, move.toY);
         ApplyMove(board, move.fromX, move.fromY, move.toX, move.toY, move.isJump);
     }
 }

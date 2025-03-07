@@ -10,4 +10,11 @@ public class CellValueEnum
         WhiteKing,
         BlackKing
     }
+
+    public enum ResultEnum
+    {
+        WhiteWin,
+        BlackWin,
+        Draw
+    }
 }
