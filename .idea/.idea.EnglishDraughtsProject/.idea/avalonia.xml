@@ -8,6 +8,7 @@
         <entry key="EnglishDraughtsProject/MainWindow.axaml" value="EnglishDraughtsProject/EnglishDraughtsProject.csproj" />
         <entry key="EnglishDraughtsProject/Views/BoardView.axaml" value="EnglishDraughtsProject/EnglishDraughtsProject.csproj" />
         <entry key="EnglishDraughtsProject/Views/HintDialog.axaml" value="EnglishDraughtsProject/EnglishDraughtsProject.csproj" />
+        <entry key="EnglishDraughtsProject/Views/MassegeDialog.axaml" value="EnglishDraughtsProject/EnglishDraughtsProject.csproj" />
       </map>
     </option>
   </component>

@@ -1,25 +1,15 @@
 namespace EnglishDraughtsProject.Models;
 
-public class Move
+public class Move(int fromX, int fromY, int toX, int toY, bool isJump, CellValueEnum.CellValue value)
 {
-    public int fromX { get; set; }
-    public int fromY { get; set; }
-    public int toX { get; set; }
-    public int toY { get; set; }
-    public CellValueEnum.CellValue value { get; set; }
+    public int fromX { get; set; } = fromX;
+    public int fromY { get; set; } = fromY;
+    public int toX { get; set; } = toX;
+    public int toY { get; set; } = toY;
+    private CellValueEnum.CellValue value { get; set; } = value;
 
-    public bool isJump { get; set; } 
+    public bool isJump { get; set; } = isJump;
 
-    public Move(int fromX, int fromY, int toX, int toY, bool isJump, CellValueEnum.CellValue value)
-    {
-        this.fromX = fromX;
-        this.fromY = fromY;
-        this.toX = toX;
-        this.toY = toY;
-        this.isJump = isJump;
-        this.value = value;
-    }
-    
     public override string ToString()
     {
         return $"From ({fromX}, {fromY}) to ({toX}, {toY}), IsJump: {isJump}, Value: {value}";

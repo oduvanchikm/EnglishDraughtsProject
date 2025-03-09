@@ -7,18 +7,10 @@ using Microsoft.Extensions.Logging;
 
 namespace EnglishDraughtsProject.Services;
 
-public class AiGameLogicService : BaseGameLogicService
+public class AiGameLogicService(Board board, ILogger<AiGameLogicService> logger) : BaseGameLogicService(board, logger)
 {
     private const int Depth = 5;
     private const int sizeBoard = 8;
-    private readonly ILogger<AiGameLogicService> _logger;
-    // private readonly GameLogicService _gameLogicService;
-    
-    public AiGameLogicService(Board board, ILogger<AiGameLogicService> logger) : base(board, logger)
-    {
-        _logger = logger;
-        // _gameLogicService = gameLogicService;
-    }
 
     private async Task<Move> GetNextMoveAsync(Board board, bool isWhiteTurn)
     {
@@ -27,45 +19,46 @@ public class AiGameLogicService : BaseGameLogicService
 
     public override async Task<string> GetHintAsync()
     {
-        _logger.LogInformation("[AiGameLogicService] : Getting hint for the current board state.");
+        logger.LogInformation("[AiGameLogicService] : Getting hint for the current board state.");
         Console.WriteLine("[AiGameLogicService] : Getting hint for the current board state.");
         Console.WriteLine("[AiGameLogicService] : {0}" , _isWhiteTurn);
         Move move = await GetNextMoveAsync(board, _isWhiteTurn);
         
-        if (move == null)
-        {
-            _logger.LogWarning("[AiGameLogicService] : No valid move found for hint.");
-            // Console.WriteLine("[AiGameLogicService] : No valid move found for hint.");
-            return null;
-        }
         
-        _logger.LogInformation("[AiGameLogicService] : Hint provided: {Hint}", move.ToString());
+        // if (move == null)
+        // {
+        //     logger.LogWarning("[AiGameLogicService] : No valid move found for hint.");
+        //     // Console.WriteLine("[AiGameLogicService] : No valid move found for hint.");
+        //     return null;
+        // }
+        
+        logger.LogInformation("[AiGameLogicService] : Hint provided: {Hint}", move.ToString());
         Console.WriteLine("[AiGameLogicService] : Hint provided: {0}", move.ToString());
         return move.ToString();
     }
 
     public override bool Move(int fromX, int fromY, int toX, int toY)
     {
-        _logger.LogInformation("[AiGameLogicService] : Attempting to move a piece from ({0}, {1}) to ({2}, {3})", fromX, fromY, toX, toY);
+        logger.LogInformation("[AiGameLogicService] : Attempting to move a piece from ({0}, {1}) to ({2}, {3})", fromX, fromY, toX, toY);
         Console.WriteLine("[AiGameLogicService] : Attempting to move a piece from ({0}, {1}) to ({2}, {3})", fromX, fromY, toX, toY);
         
         Move bestMove = GetNextMove(board, !_isWhiteTurn);
 
         if (bestMove == null)
         {
-            _logger.LogWarning("[AiGameLogicService] : No valid move found for the AI.");
+            logger.LogWarning("[AiGameLogicService] : No valid move found for the AI.");
             Console.WriteLine("[AiGameLogicService] : No valid move found for the AI.");
             return false;
         }
         
-        _logger.LogInformation("[AiGameLogicService] : Best move found: {BestMove}", bestMove.ToString());
+        logger.LogInformation("[AiGameLogicService] : Best move found: {BestMove}", bestMove.ToString());
         Console.WriteLine("[AiGameLogicService] : Best move found: {0}", bestMove.ToString());
 
         ApplyMoveForAi(board, bestMove);
 
         _isWhiteTurn = !_isWhiteTurn;
         
-        _logger.LogInformation("[AiGameLogicService] : Move applied. It's now the turn of the {TurnColor}.", _isWhiteTurn ? "White" : "Black");
+        logger.LogInformation("[AiGameLogicService] : Move applied. It's now the turn of the {TurnColor}.", _isWhiteTurn ? "White" : "Black");
         Console.WriteLine("[AiGameLogicService] : Move applied. It's now the turn of the {0}.", _isWhiteTurn ? "White" : "Black");
 
         return true;
@@ -73,14 +66,14 @@ public class AiGameLogicService : BaseGameLogicService
 
     private Move GetNextMove(Board board, bool isWhiteTurn)
     {
-        _logger.LogInformation("[AiGameLogicService] : Getting the next move for {PlayerColor} player.", isWhiteTurn ? "White" : "Black");
+        logger.LogInformation("[AiGameLogicService] : Getting the next move for {PlayerColor} player.", isWhiteTurn ? "White" : "Black");
         // Console.WriteLine("[AiGameLogicService] : Getting the next move for {0} player.", isWhiteTurn ? "White" : "Black");
 
         List<Move> moves = GetAllMoves(board, isWhiteTurn);
 
         if (moves.Count == 0)
         {
-            _logger.LogWarning("[AiGameLogicService] : No available moves for the {PlayerColor} player.", isWhiteTurn ? "White" : "Black");
+            logger.LogWarning("[AiGameLogicService] : No available moves for the {PlayerColor} player.", isWhiteTurn ? "White" : "Black");
             // Console.WriteLine("[AiGameLogicService] : No available moves for the {0} player.", isWhiteTurn ? "White" : "Black");
             return null;
         }
@@ -90,7 +83,7 @@ public class AiGameLogicService : BaseGameLogicService
         List<Move> jumpMoves = moves.Where(m => m.isJump).ToList();
         if (jumpMoves.Count > 0)
         {
-            _logger.LogInformation("[AiGameLogicService] : Jump moves available. Returning a random jump move.");
+            logger.LogInformation("[AiGameLogicService] : Jump moves available. Returning a random jump move.");
             // Console.WriteLine("[AiGameLogicService] : Returning a random jump move.");
             return jumpMoves[new Random().Next(jumpMoves.Count)];
         }
@@ -103,7 +96,7 @@ public class AiGameLogicService : BaseGameLogicService
 
             int score = MinMaxAlgorithm(clonedBoard, !isWhiteTurn, Depth, int.MinValue, int.MaxValue);
             
-            _logger.LogInformation("[AiGameLogicService] : Move evaluated: {Move}. Score: {Score}", move.ToString(), score);
+            logger.LogInformation("[AiGameLogicService] : Move evaluated: {Move}. Score: {Score}", move.ToString(), score);
             // Console.WriteLine("[AiGameLogicService] : Move evaluated: {0}. Score: {1}", move.ToString(), score);
 
             if (score > bestScore)
@@ -123,12 +116,12 @@ public class AiGameLogicService : BaseGameLogicService
         
         if (bestMove != null)
         {
-            _logger.LogInformation("[AiGameLogicService] : Best move selected: {BestMove}", bestMove.ToString());
+            logger.LogInformation("[AiGameLogicService] : Best move selected: {BestMove}", bestMove.ToString());
             // Console.WriteLine("[AiGameLogicService] : Best move selected: {0}", bestMove.ToString());
         }
         else
         {
-            _logger.LogWarning("[AiGameLogicService] : No best move selected.");
+            logger.LogWarning("[AiGameLogicService] : No best move selected.");
             // Console.WriteLine("[AiGameLogicService] : No best move selected.");
         }
 
@@ -137,13 +130,13 @@ public class AiGameLogicService : BaseGameLogicService
 
     private int MinMaxAlgorithm(Board board, bool isWhiteTurn, int depth, int alpha, int beta)
     {
-        _logger.LogInformation("[AiGameLogicService] : Running MinMax algorithm at depth {Depth} for {PlayerColor} player.", depth, isWhiteTurn ? "White" : "Black");
+        logger.LogInformation("[AiGameLogicService] : Running MinMax algorithm at depth {Depth} for {PlayerColor} player.", depth, isWhiteTurn ? "White" : "Black");
         // Console.WriteLine("[AiGameLogicService] : Running MinMax algorithm at depth {0} for {1} player.", depth, isWhiteTurn ? "White" : "Black");
         
         if (depth == 0)
         {
             int evaluation = EvaluateBoard(board);
-            _logger.LogInformation("[AiGameLogicService] : Board evaluated at depth 0. Score: {Score}", evaluation);
+            logger.LogInformation("[AiGameLogicService] : Board evaluated at depth 0. Score: {Score}", evaluation);
             // Console.WriteLine("[AiGameLogicService] : Board evaluated at depth 0. Score: {0}", evaluation);
             return evaluation;
         }
@@ -197,7 +190,7 @@ public class AiGameLogicService : BaseGameLogicService
 
     private int EvaluateBoard(Board board)
     {
-        _logger.LogInformation("[AiGameLogicService] : Evaluating the board.");
+        logger.LogInformation("[AiGameLogicService] : Evaluating the board.");
         // Console.WriteLine("[AiGameLogicService] : Evaluating the board.");
 
         int whiteCheckerCount = 0;
@@ -242,7 +235,7 @@ public class AiGameLogicService : BaseGameLogicService
         int score = (whiteCheckerCount - blackCheckerCount) * 100 + (whiteKingCount - blackKingCount) * 200
             + (whiteCheckersInCenter - blackCheckersInCenter) * 10;
         
-        _logger.LogInformation("[AiGameLogicService] : Board evaluation complete. Score: {Score}", score);
+        logger.LogInformation("[AiGameLogicService] : Board evaluation complete. Score: {Score}", score);
         // Console.WriteLine("[AiGameLogicService] : Board evaluation complete. Score: {0}", score);
         
         return score;

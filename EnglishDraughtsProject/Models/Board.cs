@@ -1,9 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using Avalonia.Media;
-using Microsoft.Extensions.Logging;
+using System.Buffers;
 
 namespace EnglishDraughtsProject.Models;
 
@@ -13,28 +8,39 @@ public class Board
 
     public Cell[,] Cells { get; } = new Cell[BoardSize, BoardSize];
 
-    public Board()
+    private readonly CellPool _cellPool;
+
+    public Board(CellPool cellPool)
     {
+        _cellPool = cellPool;
         InitCells();
     }
-    
+
     public void ResetBoard()
     {
+        for (int i = 0; i < BoardSize; ++i)
+        {
+            for (int j = 0; j < BoardSize; ++j)
+            {
+                _cellPool.ReturnCell(Cells[i, j]);
+            }
+        }
+
         InitCells();
     }
 
     public Board CloneBoard()
     {
-        Board cloneBoard = new Board();
+        Board cloneBoard = new Board(_cellPool);
 
         for (int i = 0; i < BoardSize; ++i)
         {
             for (int j = 0; j < BoardSize; ++j)
             {
-                cloneBoard.Cells[i, j] = new Cell(Cells[i, j]);
+                cloneBoard.Cells[i, j] = _cellPool.GetCell(Cells[i, j].X, Cells[i, j].Y, Cells[i, j].Value);
             }
         }
-        
+
         return cloneBoard;
     }
 
@@ -44,10 +50,10 @@ public class Board
         {
             for (int j = 0; j < BoardSize; ++j)
             {
-                Cells[i, j] = (i + j) % 2 == 0 ? new Cell(i, j, CellValueEnum.CellValue.Empty) :
-                    (j < 3) ? new Cell(i, j, CellValueEnum.CellValue.BlackChecker) :
-                    (j > 4) ? new Cell(i, j, CellValueEnum.CellValue.WhiteChecker) :
-                    new Cell(i, j, CellValueEnum.CellValue.Empty);
+                Cells[i, j] = (i + j) % 2 == 0 ? _cellPool.GetCell(i, j, CellValueEnum.CellValue.Empty) : 
+                    (j < 3) ? _cellPool.GetCell(i, j, CellValueEnum.CellValue.BlackChecker) : 
+                    (j > 4) ? _cellPool.GetCell(i, j, CellValueEnum.CellValue.WhiteChecker) : 
+                    _cellPool.GetCell(i, j, CellValueEnum.CellValue.Empty);
             }
         }
     }

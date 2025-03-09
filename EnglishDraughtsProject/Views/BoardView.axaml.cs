@@ -19,17 +19,15 @@ public partial class BoardView : UserControl
     private AiGameLogicService _aiGameLogicService;
     private readonly UniformGrid _grid;
     private readonly Board _board;
-    private Cell? _selectedCell = null;
-    private CellValueEnum.CellValue PlayerColor;
-    // private bool _isPlayerTurn;
+    private Cell? _selectedCell;
+    private CellValueEnum.CellValue _playerColor;
 
     public BoardView()
     {
-        InitializeComponent();
-
-        // _logger = logger;
+        CellPool cellPool = new CellPool(128);
+        _board = new Board(cellPool); 
         
-        _board = new Board();
+        InitializeComponent();
 
         _gameLogicService = new GameLogicService(_board,
             new AiService("OPENAI_API_KEY", new LoggerFactory().CreateLogger<AiService>()),
@@ -76,8 +74,8 @@ public partial class BoardView : UserControl
             Children = { playerSelection, boardContainer }
         };
 
-        PlayerColor = CellValueEnum.CellValue.WhiteChecker;
-        _gameLogicService.setIsWhiteTurn(true);
+        _playerColor = CellValueEnum.CellValue.WhiteChecker;
+        _gameLogicService.SetIsWhiteTurn(true);
         
         _aiGameLogicService = new AiGameLogicService(_board,
             new LoggerFactory().CreateLogger<AiGameLogicService>());
@@ -92,7 +90,7 @@ public partial class BoardView : UserControl
         var comboBox = sender as ComboBox;
         if (comboBox?.SelectedItem is string selectedColor)
         {
-            PlayerColor = selectedColor == "White"
+            _playerColor = selectedColor == "White"
                 ? CellValueEnum.CellValue.WhiteChecker
                 : CellValueEnum.CellValue.BlackChecker;
 
@@ -117,7 +115,7 @@ public partial class BoardView : UserControl
 
         DrawBoard();
 
-        _gameLogicService.setIsWhiteTurn(PlayerColor == CellValueEnum.CellValue.WhiteChecker);
+        _gameLogicService.SetIsWhiteTurn(_playerColor == CellValueEnum.CellValue.WhiteChecker);
         
         Console.WriteLine($"[BoardView RestartGame ] : Current turn: {(_gameLogicService.IsWhiteTurn ? "White" : "Black")}");
         
@@ -135,34 +133,6 @@ public partial class BoardView : UserControl
             // _logger.LogInformation("[BoardView] : AI's turn to move.");
             Console.WriteLine("[BoardView] : AI's turn to move.");
             ExecuteAiMove().ConfigureAwait(false);
-        }
-    }
-    
-    private async void HintButton_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        
-        if (!_gameLogicService.IsWhiteTurn)
-        {
-            // _logger.LogInformation("[BoardView] : !AI's turn to move.");
-            Console.WriteLine("[BoardView] : !AI's turn to move.");
-            return;
-        }
-        
-        // _logger.LogInformation("[BoardView] : Hint button clicked.");
-        Console.WriteLine("[BoardView] : Hint button clicked.");
-
-        var hint = await _gameLogicService.GetHintAsync();
-        var parentWindow = this.VisualRoot as Window;
-
-        if (parentWindow != null)
-        {
-            var hintDialog = new HintDialog(hint);
-            await hintDialog.ShowDialog(parentWindow);
-        }
-        else
-        {
-            // _logger.LogInformation("[BoardView] : Error: Cannot find parent window.");
-            Console.WriteLine("[BoardView] : Error: Cannot find parent window.");
         }
     }
     
@@ -197,7 +167,7 @@ public partial class BoardView : UserControl
                         },
                         Tag = (x, y)
                     };
-
+                    
                     border.PointerPressed += OnCellClick;
                     _grid.Children.Add(border);
                 }
@@ -243,7 +213,7 @@ public partial class BoardView : UserControl
                 _selectedCell = null;
                 DrawBoard();
 
-                _gameLogicService.setIsWhiteTurn(false); 
+                _gameLogicService.SetIsWhiteTurn(false); 
                 Console.WriteLine("[OnCellClick      ] : Player moved. Now AI's turn.");
                 
                 await Task.Delay(500);
@@ -280,7 +250,7 @@ public partial class BoardView : UserControl
                     
                     Console.WriteLine($"[BoardView ExecuteAiMove] : Current turn: {(_gameLogicService.IsWhiteTurn ? "White" : "Black")}");
 
-                    _gameLogicService.setIsWhiteTurn(true);
+                    _gameLogicService.SetIsWhiteTurn(true);
                 }
             }
         }
@@ -288,12 +258,13 @@ public partial class BoardView : UserControl
 
     private void HighlightMove(int fromX, int fromY, int toX, int toY)
     {
-        foreach (Border border in _grid.Children)
+        foreach (Control child in _grid.Children)
         {
-            if (border.Tag is (int x, int y))
+            if (child is Border border && border.Tag is (int x, int y))
             {
-                border.BorderBrush = (x == fromX && y == fromY) || (x == toX && y == toY) ? Brushes.Red : Brushes.Black;
-                border.BorderThickness = new Thickness((x == fromX && y == fromY) || (x == toX && y == toY) ? 3 : 1);
+                bool isHighlighted = (x == fromX && y == fromY) || (x == toX && y == toY);
+                border.BorderBrush = isHighlighted ? Brushes.Red : Brushes.Black;
+                border.BorderThickness = new Thickness(isHighlighted ? 3 : 1);
             }
         }
     }
