@@ -1,3 +1,5 @@
+using System;
+
 namespace EnglishDraughtsProject.Models;
 
 public class CellValueEnum
@@ -10,6 +12,13 @@ public class CellValueEnum
         WhiteKing,
         BlackKing
     }
+    
+    public enum PlayerColor
+    {
+        White,
+        Black
+    }
+
 
     public enum ResultEnum
     {

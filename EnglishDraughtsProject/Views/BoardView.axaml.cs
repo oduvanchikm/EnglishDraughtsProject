@@ -20,7 +20,8 @@ public partial class BoardView : UserControl
     private readonly UniformGrid _grid;
     private readonly Board _board;
     private Cell? _selectedCell;
-    private CellValueEnum.CellValue _playerColor;
+    private CellValueEnum.PlayerColor _playerColor;
+    private CellValueEnum.PlayerColor _currentPlayerColor;
 
     public BoardView()
     {
@@ -74,8 +75,13 @@ public partial class BoardView : UserControl
             Children = { playerSelection, boardContainer }
         };
 
-        _playerColor = CellValueEnum.CellValue.WhiteChecker;
+        _playerColor = CellValueEnum.PlayerColor.White; 
+        _currentPlayerColor = CellValueEnum.PlayerColor.White;
         _gameLogicService.SetIsWhiteTurn(true);
+        
+        Console.WriteLine("Color {0}", _playerColor == CellValueEnum.PlayerColor.White ? "White" : "Black");
+        
+        Console.WriteLine("current color {0}", _currentPlayerColor == CellValueEnum.PlayerColor.White ? "White" : "Black");
         
         _aiGameLogicService = new AiGameLogicService(_board,
             new LoggerFactory().CreateLogger<AiGameLogicService>());
@@ -91,8 +97,10 @@ public partial class BoardView : UserControl
         if (comboBox?.SelectedItem is string selectedColor)
         {
             _playerColor = selectedColor == "White"
-                ? CellValueEnum.CellValue.WhiteChecker
-                : CellValueEnum.CellValue.BlackChecker;
+                ? CellValueEnum.PlayerColor.White
+                : CellValueEnum.PlayerColor.Black;
+
+            _currentPlayerColor = _playerColor;
 
             Console.WriteLine($"[BoardView] : Player selected color: {selectedColor}");
 
@@ -114,12 +122,14 @@ public partial class BoardView : UserControl
             new LoggerFactory().CreateLogger<AiGameLogicService>());
 
         DrawBoard();
+        
+        _currentPlayerColor = _playerColor;
 
-        _gameLogicService.SetIsWhiteTurn(_playerColor == CellValueEnum.CellValue.WhiteChecker);
+        // _gameLogicService.SetIsWhiteTurn(_playerColor == CellValueEnum.CellValue.WhiteChecker);
         
         Console.WriteLine($"[BoardView RestartGame ] : Current turn: {(_gameLogicService.IsWhiteTurn ? "White" : "Black")}");
         
-        if (!_gameLogicService.IsWhiteTurn)
+        if (_currentPlayerColor == CellValueEnum.PlayerColor.Black)
         {
             Task.Run(async () =>
             {
@@ -127,17 +137,27 @@ public partial class BoardView : UserControl
                 await Dispatcher.UIThread.InvokeAsync(async () => await ExecuteAiMove());
             });
         }
-
-        if (!_gameLogicService.IsWhiteTurn) 
-        {
-            // _logger.LogInformation("[BoardView] : AI's turn to move.");
-            Console.WriteLine("[BoardView] : AI's turn to move.");
-            ExecuteAiMove().ConfigureAwait(false);
-        }
+        
+        // if (!_gameLogicService.IsWhiteTurn)
+        // {
+        //     Task.Run(async () =>
+        //     {
+        //         await Task.Delay(500);
+        //         await Dispatcher.UIThread.InvokeAsync(async () => await ExecuteAiMove());
+        //     });
+        // }
+        //
+        // if (!_gameLogicService.IsWhiteTurn) 
+        // {
+        //     // _logger.LogInformation("[BoardView] : AI's turn to move.");
+        //     Console.WriteLine("[BoardView] : AI's turn to move.");
+        //     ExecuteAiMove().ConfigureAwait(false);
+        // }
     }
     
     private void DrawBoard()
     {
+        Console.WriteLine("[BoardView] : start.");
         Dispatcher.UIThread.InvokeAsync(() =>
         {
             _grid.Children.Clear();
@@ -178,6 +198,7 @@ public partial class BoardView : UserControl
 
     private string GetCheckerSymbol(int x, int y)
     {
+        Console.WriteLine("[GetCheckerSymbol] : start");
         var cell = _gameLogicService.Board.Cells[x, y];
         return cell.Value switch
         {
@@ -191,53 +212,73 @@ public partial class BoardView : UserControl
 
     private async void OnCellClick(object? sender, PointerPressedEventArgs e)
     {
-        if (!_gameLogicService.IsWhiteTurn) return;
+        Console.WriteLine("[OnCellClick] : start");
+        if (_currentPlayerColor != _playerColor) return;
 
         if (sender is not Border border || border.Tag is not (int x, int y)) return;
 
         var clickedCell = _gameLogicService.Board.Cells[x, y];
+        
+        Console.WriteLine("[OnCellClick] : start2");
 
         if (_selectedCell == null)
         {
+            Console.WriteLine("[OnCellClick] : start3");
             if (clickedCell.Value == CellValueEnum.CellValue.Empty) return;
-            if ((_gameLogicService.IsWhiteTurn && clickedCell.Value == CellValueEnum.CellValue.BlackChecker) ||
-                (!_gameLogicService.IsWhiteTurn && clickedCell.Value == CellValueEnum.CellValue.WhiteChecker)) return;
+            
+            var clickedCellPlayerColor = GetPlayerColor(clickedCell.Value);
+            if (clickedCellPlayerColor != _currentPlayerColor) return;
 
             _selectedCell = clickedCell;
+            Console.WriteLine("[OnCellClick] : start4");
         }
         else
         {
+            Console.WriteLine("[ExecuteAiMove] : start9");
+            Console.WriteLine("[ExecuteAiMove] : {0}", _currentPlayerColor == CellValueEnum.PlayerColor.Black ? "Black" : "White");
             if (_gameLogicService.Move(_selectedCell.X, _selectedCell.Y, x, y))
             {
                 HighlightMove(_selectedCell.X, _selectedCell.Y, x, y);
+                Console.WriteLine("[ExecuteAiMove] : start10");
                 _selectedCell = null;
                 DrawBoard();
 
-                _gameLogicService.SetIsWhiteTurn(false); 
-                Console.WriteLine("[OnCellClick      ] : Player moved. Now AI's turn.");
-                
+                _currentPlayerColor = _currentPlayerColor == CellValueEnum.PlayerColor.White
+                    ? CellValueEnum.PlayerColor.Black
+                    : CellValueEnum.PlayerColor.White;
+
+                Console.WriteLine("[OnCellClick] : Player moved. Now AI's turn.");
+
                 await Task.Delay(500);
                 await ExecuteAiMove();
+                Console.WriteLine("[OnCellClick] : start7");
             }
             else
             {
+                Console.WriteLine("[OnCellClick] : start6");
                 _selectedCell = null;
+                Console.WriteLine("[OnCellClick] : start8");
             }
         }
     }
 
     private async Task ExecuteAiMove()
     {
-        if (_gameLogicService.IsWhiteTurn) return;
+        Console.WriteLine("[ExecuteAiMove] : start");
+        if (_currentPlayerColor == _playerColor) return;
 
         var aiMove = await _aiGameLogicService.GetHintAsync();
+        
+        Console.WriteLine("[ExecuteAiMove] : start2");
 
         if (!string.IsNullOrEmpty(aiMove))
         {
+            Console.WriteLine("[ExecuteAiMove] : start3");
             var moveParts = aiMove.Split(" to ");
 
             if (moveParts.Length == 2)
             {
+                Console.WriteLine("[ExecuteAiMove] : start4");
                 var fromCoordinates = moveParts[0].Substring(5);
                 var (fromX, fromY) = ParseCoordinates(fromCoordinates);
 
@@ -246,11 +287,14 @@ public partial class BoardView : UserControl
 
                 if (_aiGameLogicService.Move(fromX, fromY, toX, toY))
                 {
+                    Console.WriteLine("[ExecuteAiMove] : start5");
                     DrawBoard();
                     
                     Console.WriteLine($"[BoardView ExecuteAiMove] : Current turn: {(_gameLogicService.IsWhiteTurn ? "White" : "Black")}");
 
-                    _gameLogicService.SetIsWhiteTurn(true);
+                    _currentPlayerColor = _currentPlayerColor == CellValueEnum.PlayerColor.White
+                        ? CellValueEnum.PlayerColor.Black
+                        : CellValueEnum.PlayerColor.White;
                 }
             }
         }
@@ -274,6 +318,21 @@ public partial class BoardView : UserControl
         var trimmed = input.Trim('(', ')').Trim();
         var parts = trimmed.Split(',');
         return (int.Parse(parts[0].Trim()), int.Parse(parts[1].Trim()));
+    }
+    
+    private CellValueEnum.PlayerColor GetPlayerColor(CellValueEnum.CellValue cellValue)
+    {
+        switch (cellValue)
+        {
+            case CellValueEnum.CellValue.WhiteChecker:
+            case CellValueEnum.CellValue.WhiteKing:
+                return CellValueEnum.PlayerColor.White;
+            case CellValueEnum.CellValue.BlackChecker:
+            case CellValueEnum.CellValue.BlackKing:
+                return CellValueEnum.PlayerColor.Black;
+            default:
+                throw new ArgumentException("Invalid cell value", nameof(cellValue));
+        }
     }
 
 }

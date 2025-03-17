@@ -37,17 +37,21 @@ public class GameLogicService(Board board, AiService aiService, ILogger<GameLogi
             return false;
         }
 
+        Console.WriteLine("aboba");
         int directionX = fromXYCell.X - toXYCell.X;
         int directionY = fromXYCell.Y - toXYCell.Y;
         bool isJump = Math.Abs(directionX) == 2 && Math.Abs(directionY) == 2;
+        Console.WriteLine("aboba2");
 
         if (PlayerHasAvailableJump(_isWhiteTurn) && !isJump)
         {
+            Console.WriteLine("aboba262");
             logger.LogWarning("[GameLogicService] : Player ({0}) must jump but attempted a regular move", _isWhiteTurn ? "White" : "Black");
             Console.WriteLine("[GameLogicService] : Player ({0}) must jump but attempted a regular move", _isWhiteTurn ? "White" : "Black");
             return false;
         }
         
+        Console.WriteLine("aboba3");
         logger.LogInformation("[GameLogicService] : Move is valid. Applying move from ({0}, {1}) to ({2}, {3}), jump: {4}",
             fromX, fromY, toX, toY, isJump ? "Yes" : "No");
         Console.WriteLine("[GameLogicService] : Move is valid. Applying move from ({0}, {1}) to ({2}, {3}), jump: {4}",
